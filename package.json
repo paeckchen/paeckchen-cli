@@ -1,0 +1,98 @@
+{
+  "name": "paeckchen-cli",
+  "version": "0.4.1",
+  "description": "paeckchen command line interface",
+  "main": "dist/src/index.js",
+  "bin": {
+    "paeckchen": "./dist/src/index.js"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "scripts": {
+    "commitmsg": "conventional-changelog-lint -e",
+    "linter": "tslint --project ./tsconfig.json --type-check",
+    "clean": "rimraf dist .nyc_output coverage",
+    "prebuild": "npm run clean",
+    "build": "tsc --sourceMap",
+    "pretest": "npm run clean && tsc --inlineSourceMap",
+    "test": "nyc --reporter lcov ava",
+    "watch:build": "tsc --watch --sourceMap",
+    "watch:test": "npm test -- --watch",
+    "prerelease": "git checkout master && git pull origin master && npm test && npm run build",
+    "release": "standard-version",
+    "postrelease": "git push --follow-tags origin master && npm publish",
+    "update": "tipi update"
+  },
+  "tipi": {
+    "version": "3.1.0",
+    "template": "typescript"
+  },
+  "repository": {
+    "type": "git",
+    "url": "paeckchen/paeckchen-cli"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Markus Wolf",
+    "email": "knister.peter@shadowrun-clan.de"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paeckchen/paeckchen/issues"
+  },
+  "homepage": "https://github.com/paeckchen/paeckchen#readme",
+  "devDependencies": {
+    "@knisterpeter/standard-tslint": "^1.0.0",
+    "@types/debug": "~0.0.29",
+    "@types/meow": "~3.6.0",
+    "@types/minimist": "~1.1.29",
+    "@types/node": "~6.0.52",
+    "ava": "~0.17.0",
+    "conventional-changelog-lint": "1.1.0",
+    "coveralls": "~2.11.15",
+    "cz-customizable": "4.0.0",
+    "execa": "~0.5.0",
+    "husky": "0.12.0",
+    "nyc": "~10.0.0",
+    "rimraf": "~2.5.4",
+    "standard-version": "4.0.0",
+    "source-map-support": "~0.4.6",
+    "tipi-cli": "3.1.0",
+    "tslint": "~4.1.1",
+    "typescript": "~2.1.4"
+  },
+  "dependencies": {
+    "debug": "~2.4.5",
+    "meow": "~3.7.0",
+    "paeckchen-core": "~0.4.2",
+    "terminal-kit": "~0.25.6"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-customizable"
+    },
+    "cz-customizable": {
+      "config": "./.cz-config.js"
+    }
+  },
+  "ava": {
+    "files": [
+      "dist/test/**/*-test.js"
+    ],
+    "source": [
+      "dist/src/**/*.js"
+    ],
+    "require": [
+      "source-map-support/register"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "node_modules",
+      "coverage",
+      "dist/test",
+      "test"
+    ]
+  }
+}
