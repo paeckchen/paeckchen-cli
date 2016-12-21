@@ -34,7 +34,7 @@ Built by (c) KnisterPeter. Released under the MIT license.
 [travis-image]: https://travis-ci.org/paeckchen/paeckchen-cli.svg?branch=master
 [travis-url]: https://travis-ci.org/paeckchen/paeckchen-cli
 
-[appveyor-image]: https://ci.appveyor.com/api/projects/status/r5bibqgy676fbf87/branch/master?svg=true
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/anfiss3i8rj81a6m/branch/master?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/KnisterPeter/paeckchen-cli/branch/master
 
 [coveralls-image]: https://coveralls.io/repos/github/paeckchen/paeckchen-cli/badge.svg?branch=master
