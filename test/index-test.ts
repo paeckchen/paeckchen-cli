@@ -4,6 +4,13 @@ import { readFileSync, statSync, unlinkSync } from 'fs';
 import { resolve, join } from 'path';
 import { runInNewContext } from 'vm';
 
+const app = resolve(process.cwd(), 'dist', 'src', 'index.js');
+const entry = join('dist', 'test', 'fixtures', 'entry.js');
+
+function readCodeFile(codeFile: string): string {
+  return readFileSync(join(process.cwd(), codeFile)).toString();
+}
+
 test.beforeEach('remove test file', t => {
   const seed = Math.random() * 1000000000000000;
   const codeFile = join('dist', 'test', 'fixtures', `result-${seed}.js`);
@@ -29,156 +36,82 @@ test.afterEach(t => {
   }
 });
 
-test.cb('cli without parameters and config file should show error', t => {
+test('cli without parameters and config file should show error', async t => {
   const options = {
     env: {
       DEBUG: 'cli'
     }
   };
-  execa('node', [resolve(process.cwd(), 'dist', 'src', 'index.js')], options)
-    .then(result => {
-      t.fail('There should be an error from the cli');
-      t.end();
-    })
-    .catch(err => {
-      t.regex(err.stderr.toString(), /Missing entry-point/);
-      t.end();
-    });
+  try {
+    await execa('node', [app], options);
+    t.fail('There should be an error from the cli');
+  } catch (err) {
+    t.regex(err.stderr.toString(), /Missing entry-point/);
+  }
 });
 
-test.cb('cli with entry-point should output bundle', t => {
-  const args = [
-    resolve(process.cwd(), 'dist', 'src', 'index.js'),
-    '--entry',
-    join('dist', 'test', 'fixtures', 'entry.js')
-  ];
-  execa('node', args)
-    .then(result => {
-      const code = result.stdout.toString();
+test('cli with entry-point should output bundle', async t => {
+  const args = [app, '--entry', entry];
+  const result = await execa('node', args, {cwd: process.cwd()});
+  const code = result.stdout.toString();
 
-      let stdout = '';
-      const sandbox = {
-        console: {
-          log(msg: string): void {
-            stdout += msg;
-          }
-        }
-      };
-      runInNewContext(code, sandbox);
-
-      t.is(stdout, 'string');
-      t.end();
-    })
-    .catch(err => {
-      console.error(err);
-      console.error(err.stack);
-      t.fail('There should be no error from the cli');
-      t.end();
-    });
-});
-
-test.cb('cli with entry-point and out-file should write bundle', t => {
-  const args = [
-    resolve(process.cwd(), 'dist', 'src', 'index.js'),
-    '--entry',
-    join('dist', 'test', 'fixtures', 'entry.js'),
-    '--out-file',
-    t.context.codeFile
-  ];
-  execa('node', args)
-    .then(result => {
-      const code = readFileSync(t.context.codeFile).toString();
-
-      let output = '';
-      const sandbox = {
-        console: {
-          log(msg: string): void {
-            output += msg;
-          }
-        }
-      };
-      runInNewContext(code, sandbox);
-
-      t.is(output, 'string');
-      t.end();
-    })
-    .catch(err => {
-      console.error(err);
-      t.fail('There should be no error from the cli');
-      t.end();
-    });
-});
-
-test.cb('cli with entry-point and source-map should output bundle', t => {
-  const args = [
-    resolve(process.cwd(), 'dist', 'src', 'index.js'),
-    '--entry',
-    join('dist', 'test', 'fixtures', 'entry.js'),
-    '--source-map', 'true'
-  ];
-  execa('node', args)
-    .then(result => {
-      const code = result.stdout.toString();
-
-      t.regex(code, /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
-      t.end();
-    })
-    .catch(err => {
-      console.error(err);
-      console.error(err.stack);
-      t.fail('There should be a source mapping url');
-      t.end();
-    });
-});
-
-test.cb('cli with entry-point, out-file and source-map should write external map', t => {
-  const args = [
-    resolve(process.cwd(), 'dist', 'src', 'index.js'),
-    '--entry',
-    join('dist', 'test', 'fixtures', 'entry.js'),
-    '--out-file',
-    t.context.codeFile,
-    '--source-map', 'true'
-  ];
-  execa('node', args)
-    .then(result => {
-      const map = JSON.parse(readFileSync(t.context.mapFile).toString());
-
-      t.truthy(map.sourcesContent[0].match(/: string/));
-      t.end();
-    })
-    .catch(err => {
-      console.error(err);
-      t.fail('There should be a type-annotation in the source-map');
-      t.end();
-    });
-});
-
-test.cb("cli with entry-point, out-file and source-map 'inline' should write inline map", t => {
-  const args = [
-    resolve(process.cwd(), 'dist', 'src', 'index.js'),
-    '--entry',
-    join('dist', 'test', 'fixtures', 'entry.js'),
-    '--out-file',
-    t.context.codeFile,
-    '--source-map', 'inline'
-  ];
-  execa('node', args)
-    .then(result => {
-      const code = readFileSync(t.context.codeFile).toString();
-      try {
-        statSync(t.context.mapFile);
-        t.fail('There should be no external map file');
-      } catch (e) {
-        // ignore
+  let stdout = '';
+  const sandbox = {
+    console: {
+      log(msg: string): void {
+        stdout += msg;
       }
+    }
+  };
+  runInNewContext(code, sandbox);
 
-      t.regex(code, /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
-      t.end();
-    })
-    .catch(err => {
-      console.error(err);
-      t.fail('There should be an inline source-map');
-      t.end();
-    });
+  t.is(stdout, 'string');
+});
+
+test('cli with entry-point and out-file should write bundle', async t => {
+  const args = [app, '--entry', entry, '--out-file', t.context.codeFile];
+  await execa('node', args, {cwd: process.cwd()});
+  const code = readCodeFile(t.context.codeFile);
+
+  let output = '';
+  const sandbox = {
+    console: {
+      log(msg: string): void {
+        output += msg;
+      }
+    }
+  };
+  runInNewContext(code, sandbox);
+
+  t.is(output, 'string');
+});
+
+test('cli with entry-point and source-map should output bundle', async t => {
+  const args = [app, '--entry', entry, '--source-map', 'true'];
+  const result = await execa('node', args, {cwd: process.cwd()});
+  const code = result.stdout.toString();
+
+  t.regex(code, /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
+});
+
+test('cli with entry-point, out-file and source-map should write external map', async t => {
+  const args = [app, '--entry', entry, '--out-file', t.context.codeFile, '--source-map', 'true'];
+  await execa('node', args, {cwd: process.cwd()});
+  const map = JSON.parse(readFileSync(join(process.cwd(), t.context.mapFile)).toString());
+
+  t.truthy(map.sourcesContent[0].match(/: string/));
+});
+
+test("cli with entry-point, out-file and source-map 'inline' should write inline map", async t => {
+  const args: string[] = [app, '--entry', entry, '--out-file', t.context.codeFile, '--source-map', 'inline'];
+  await execa('node', args, {cwd: process.cwd()});
+  const code = readCodeFile(t.context.codeFile);
+  try {
+    statSync(t.context.mapFile);
+    t.fail('There should be no external map file');
+  } catch (e) {
+    // ignore
+  }
+
+  t.regex(code, /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
 });
