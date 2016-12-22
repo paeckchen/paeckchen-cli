@@ -14,6 +14,11 @@ module.exports = function (w) {
       type: 'node'
     },
     testFramework: 'ava',
+    setup: (w) => {
+      process.cwd = function () {
+        return require('path').resolve(w.localProjectDir);
+      }
+    },
     debug: false
   };
 };
