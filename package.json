@@ -63,7 +63,7 @@
     "typescript": "~2.1.4"
   },
   "dependencies": {
-    "debug": "~2.5.1",
+    "debug": "~2.6.0",
     "meow": "~3.7.0",
     "paeckchen-core": "~0.4.2",
     "terminal-kit": "~0.26.0"
